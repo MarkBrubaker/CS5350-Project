@@ -186,10 +186,14 @@ void Graph::SmallestOriginalDegreeOrder() {
 }
 
 int Graph::ColorGraph() {
+	std::iostream::sync_with_stdio(false);
 	int maxColor = 0;
 	for(Vertex* v : ordering) {
 		v->color = Color(v);
-		if(v->color > maxColor) maxColor = v->color;
+		if(v->color > maxColor) {
+			maxColor = v->color;
+			std::cout << "New color used: " << maxColor << std::endl;
+		}
 	}
 
 	return maxColor;

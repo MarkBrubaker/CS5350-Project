@@ -5,7 +5,9 @@ void BIGGRAPHENERGY() {
 
 	graph->Establish(10000);
 	graph->CreateCompleteGraph();
+	std::cout << "Graph made" << std::endl;
 	graph->RandomOrder();
+	std::cout << "Graph ordered" << std::endl;
 	std::cout << "Colors needed: " << graph->ColorGraph() << std::endl;
 }
 
