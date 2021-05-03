@@ -4,6 +4,8 @@
 #include <string>
 #include <vector>
 #include <random>
+#include <algorithm>
+#include <queue>
 #include "Util.hpp"
 
 class Graph {
@@ -17,6 +19,9 @@ class Graph {
 		int id = 0;
 		int degree = 0;
 		int color = 0;
+		//Used only to check if an edge exists
+		//an order of magnitude faster than the linked list
+		std::vector<bool> edges;
 
 		Vertex* prev = nullptr;
 		Vertex* next = nullptr;
@@ -26,33 +31,38 @@ class Graph {
 	std::vector<Vertex> vertices;
 	std::vector<Vertex*> ordering;
 
-	int size = 0;
-
 public:
+	int size = 0;
+	int maxColor = 0;
+
 	Graph() = default;
 	~Graph();
 
-	void Establish(int verticies);
+	void Establish(const int V);
 	void Clear();
-	void AddEdge(int vertex1, int vertex2);
-	Graph::Edge* GetEdge(int vertex1, int vertex2);
+	void AddEdge(const int vertex1, const int vertex2);
+	Graph::Edge* GetEdge(const int vertex1, const int vertex2);
+	bool HasEdge(const int vertex);
 
 	//Create differnt graphs and distrobutions
 	void CreateCompleteGraph();
 	void CreateCycle();
-	void CreateEvenDistribution(int E);
-	void CreateSkewedDistribution(int E);
-	void CreateNormalDistribution(int E);
+	void CreateEvenDistribution(const int E);
+	void CreateSkewedDistribution(const int E);
+	void CreateModifiedNormalDistribution(const int E);
 
 	//Create different ordering
 	void RandomOrder();
 	void SmallestLastVertexOrder();
 	void SmallestOriginalDegreeOrder();
+	void LargestLastVertexOrder();
+	void OutsideInOrder();
+	void BreadthFirstSearchOrder();
 
-	int ColorGraph();
+	void ColorGraph();
 	int Color(Vertex* v);
 
 	void Print(std::string filename = "graph.txt");
 	void PrintDistribution(std::string filename = "distribution.txt");
-	void ReadIn(std::string filename);
+	void ReadIn(std::string filename = "graph.txt");
 };

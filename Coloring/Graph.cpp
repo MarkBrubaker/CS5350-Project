@@ -4,15 +4,21 @@ Graph::~Graph() {
 	Clear();
 }
 
-void Graph::Establish(int verticies) {
-	size = verticies;
-	edges = new Edge * [size];;
+void Graph::Establish(const int V) {
+	edges = new Edge * [V];;
 
-	for(int x = 0; x < size; x++) {
+	//vertices.reserve(size);
+	for(int x = 0; x < V; x++) {
 		edges[x] = nullptr;
 		vertices.emplace_back();
 		vertices[x].id = x;
+		vertices[x].edges.reserve(V);
+		for(int y = 0; y < V; y++) {
+			vertices[x].edges.insert(vertices[x].edges.end(), false);
+		}
 	}
+
+	size = V;
 }
 
 void Graph::Clear() {
@@ -23,19 +29,19 @@ void Graph::Clear() {
 
 	vertices.clear();
 	ordering.clear();
-
 }
 
-void Graph::AddEdge(int vertex1, int vertex2) {
+void Graph::AddEdge(const int vertex1, const int vertex2) {
 	//constant
 	Edge* e = new Edge(vertex2, edges[vertex1]);
 	//constant
 	edges[vertex1] = e;
 	//constant
 	vertices[vertex1].degree++;
+	vertices[vertex1].edges[vertex2] = true;
 }
 
-Graph::Edge* Graph::GetEdge(int vertex1, int vertex2) {
+Graph::Edge* Graph::GetEdge(const int vertex1, const int vertex2) {
 	Edge* curr = edges[vertex1];
 	while(curr != nullptr) {
 		if(curr->dest == vertex2) return curr;
@@ -43,6 +49,10 @@ Graph::Edge* Graph::GetEdge(int vertex1, int vertex2) {
 	}
 
 	return nullptr;
+}
+
+bool Graph::HasEdge(const int vertex) {
+	return false;
 }
 
 void Graph::CreateCompleteGraph() {
@@ -70,95 +80,104 @@ void Graph::CreateCycle() {
 	AddEdge(0, size - 1);
 }
 
-void Graph::CreateEvenDistribution(int E) {
+void Graph::CreateEvenDistribution(const int E) {
 	int v1 = 0;
 	int v2 = 0;
 	int maxEdges = size * (size - 1) / 2;
+	int attempts = 0;
 
 	if(E > maxEdges) {
-		std::cout << "ERROR: edges exceeds max possible edges" << std::endl;
-		throw;
+		throw "ERROR: edges exceeds max possible edges";
 	} else if(E > maxEdges / 2) {
 		std::cout << "WARNING: a fuller graph will take longer to create" << std::endl;
 	}
+	//std::cout << "The final graph will have " << (double)E / maxEdges * 100 << "% of the edges of a complete graph" << std::endl;
 
 	for(int x = 0; x < E; x++) {
 		v1 = (int)RandomNumberGenerator::getRandomNumber(0, size);
 		v2 = (int)RandomNumberGenerator::getRandomNumber(0, size);
+		attempts++;
 
-		if(GetEdge(v1, v2) != nullptr) {
+		if(v1 == v2 || vertices[v1].edges[v2]) {
 			//Edge already exist and a new one need to be chosen
 			x--;
 			continue;
 		}
 
 		AddEdge(v1, v2);
+		AddEdge(v2, v1);
 	}
+
+	//std::cout << "The success reate for creating edges is: " << (double)E / attempts * 100 << "%" << std::endl;
 }
 
-void Graph::CreateSkewedDistribution(int E) {
+void Graph::CreateSkewedDistribution(const int E) {
 	int v1 = 0;
 	int v2 = 0;
 	int maxEdges = size * (size - 1) / 2;
+	int attempts = 0;
 
 	if(E > maxEdges) {
-		std::cout << "ERROR: edges exceeds max possible edges" << std::endl;
-		throw;
+		throw "ERROR: edges exceeds max possible edges";
 	} else if(E > maxEdges / 2) {
 		std::cout << "WARNING: a fuller graph will take longer to create" << std::endl;
 	}
-
-	std::vector<int> i{0, size};
-	std::vector<double> w{1, 0};
-	std::piecewise_linear_distribution<> d(i.begin(), i.end(), w.begin());
+	//std::cout << "The final graph will have " << (double)E / maxEdges * 100 << "% of the edges of a complete graph" << std::endl;
 
 	for(int x = 0; x < E; x++) {
-		v1 = (int)d(RandomNumberGenerator::m_rng);
-		v2 = (int)RandomNumberGenerator::getRandomNumber(0, size);
+		v1 = (int)(size * (1 - sqrt(RandomNumberGenerator::getRandomNumber(0, 1))));
+		v2 = (int)(size * (1 - sqrt(RandomNumberGenerator::getRandomNumber(0, 1))));
+		
+		attempts++;
 
-		if(GetEdge(v1, v2) != nullptr) {
+		if(v1 == v2 || vertices[v1].edges[v2]) {
 			//Edge already exist and a new one need to be chosen
 			x--;
 			continue;
 		}
 
 		AddEdge(v1, v2);
+		AddEdge(v2, v1);
 	}
+
+	//std::cout << "The success reate for creating edges is: " << (double)E / attempts * 100 << "%" << std::endl;
 }
 
-void Graph::CreateNormalDistribution(int E) {
+void Graph::CreateModifiedNormalDistribution(const int E) {
 	int v1 = 0;
 	int v2 = 0;
 	int maxEdges = size * (size - 1) / 2;
+	int attempts = 0;
 
 	if(E > maxEdges) {
-		std::cout << "ERROR: edges exceeds max possible edges" << std::endl;
-		throw;
+		throw "ERROR: edges exceeds max possible edges";
 	} else if(E > maxEdges / 2) {
-		std::cout << "WARNING: a fuller graph will take longer to create" << std::endl;
+		//std::cout << "WARNING: a fuller graph will take longer to create" << std::endl;
 	}
-
-	std::normal_distribution<double> d(size / 2, size / 10);
+	//std::cout << "The final graph will have " << (double)E / maxEdges * 100 << "% of the edges of a complete graph" << std::endl;
 
 	for(int x = 0; x < E; x++) {
-		v1 = (int)d(RandomNumberGenerator::m_rng);
+		v1 = (int)RandomNumberGenerator::getNormalNumber(size);
 		v2 = (int)RandomNumberGenerator::getRandomNumber(0, size);
+		attempts++;
 
-		bool inRange = v1 < 0 || v1 >= size || v1 < 0 || v1 >= size;
-		//out of range values will error in GetEdge as well but the bool will always be checked first
-		if(inRange || GetEdge(v1, v2) != nullptr) {
+		bool inRange = (v1 < 0 || v1 >= size || v2 < 0 || v2 >= size);
+		if(inRange || v1 == v2 || vertices[v1].edges[v2]) {
 			//Edge already exist and a new one need to be chosen
 			x--;
 			continue;
 		}
 
 		AddEdge(v1, v2);
+		AddEdge(v2, v1);
 	}
+
+	//std::cout << "The success reate for creating edges is: " << (double)E / attempts * 100 << "%" << std::endl;
 }
 
 void Graph::RandomOrder() {
 	//constant
-	if(ordering.size() == 0) {
+	if(ordering.empty()) {
 		//linear
 		for(Vertex& v : vertices) {
 			ordering.emplace_back(&v);
@@ -170,33 +189,150 @@ void Graph::RandomOrder() {
 }
 
 void Graph::SmallestLastVertexOrder() {
+	std::vector<Vertex*> degreeList(size);
+	std::vector<int> modifiedDegree(size);
+	std::vector<bool> removed(size);
+
+	int index = 0;
+	for(Vertex& v : vertices) {
+		if(degreeList[v.degree] != nullptr) {
+			degreeList[v.degree]->prev = &v;
+			v.next = degreeList[v.degree];
+		}
+		degreeList[v.degree] = &v;
+		modifiedDegree[index] = v.degree;
+		index++;
+	}
+
+	for(unsigned int x = 0; x < degreeList.size(); x++) {
+		if(degreeList[x] == nullptr) continue;
+
+		Vertex* v1 = degreeList[x];
+
+		//remove node from list
+		ordering.emplace_back(v1);
+		degreeList[x] = v1->next;
+		if(v1->next != nullptr) v1->next->prev = nullptr;
+		v1->next = nullptr;
+		removed[v1->id] = true;
+		//modifiedDegree[v1->id] = -1;
+
+
+		//decrease degree of neighbors and move them down
+		Edge* curr = edges[v1->id];
+		while(curr != nullptr) {
+			int v2 = curr->dest;
+
+			//If the vertex has already been removed then skip it
+			if(removed[v2] == true) {
+				curr = curr->next;
+				continue;
+			}
+
+			//Remove the vertex from the linked ilist it is in
+			if(vertices[v2].next != nullptr) vertices[v2].next->prev = vertices[v2].prev;
+			if(vertices[v2].prev != nullptr) {
+				vertices[v2].prev->next = vertices[v2].next;
+			} else {
+				degreeList[modifiedDegree[v2]] = vertices[v2].next;
+			}
+
+			//Reduce the degree of the vertex
+			modifiedDegree[v2]--;
+
+			//Put the vertex at the head of the correct linked list
+			vertices[v2].prev = nullptr;
+			vertices[v2].next = degreeList[modifiedDegree[v2]];
+			if(degreeList[modifiedDegree[v2]] != nullptr) degreeList[modifiedDegree[v2]]->prev = &vertices[v2];
+			degreeList[modifiedDegree[v2]] = &vertices[v2];
+
+			curr = curr->next;
+		}
+
+		//decrease degree to look for by 1
+		if(x == 0) {
+			x--;
+			continue;
+		}
+		x -= 2;
+	}
+	std::reverse(ordering.begin(), ordering.end());
 }
 
 void Graph::SmallestOriginalDegreeOrder() {
-	//constant
-	if(ordering.size() == 0) {
-		//linear
-		for(Vertex& v : vertices) {
-			ordering.emplace_back(&v);
+	std::vector<Vertex*> degreeList(size);
+
+	for(Vertex& v : vertices) {
+		v.next = degreeList[v.degree];
+		degreeList[v.degree] = &v;
+	}
+
+	for(Vertex* v : degreeList) {
+		Vertex* curr = v;
+		while(curr != nullptr) {
+			ordering.push_back(curr);
+			curr = curr->next;
 		}
 	}
 
-	//guaranteed N log(N) by the standard library
-	std::sort(ordering.begin(), ordering.end(), [](Vertex* v1, Vertex* v2) {return v1->degree < v2->degree; });
+	std::reverse(ordering.begin(), ordering.end());
 }
 
-int Graph::ColorGraph() {
-	std::iostream::sync_with_stdio(false);
-	int maxColor = 0;
+void Graph::LargestLastVertexOrder() {
+	SmallestLastVertexOrder();
+	std::reverse(ordering.begin(), ordering.end());
+}
+
+void Graph::OutsideInOrder() {
+	std::vector<Vertex*> degreeList(size);
+	int bottom = 0;
+	int top = size - 1;
+
+	for(Vertex& v : vertices) {
+		v.next = degreeList[v.degree];
+		degreeList[v.degree] = &v;
+	}
+
+	bool flip = true;
+	for(int x = 0; x < size; x++) {
+		if(flip) {
+			while(degreeList[bottom] == nullptr) bottom++;
+			ordering.push_back(degreeList[bottom]);
+			degreeList[bottom] = degreeList[bottom]->next;
+			flip = false;
+		} else {
+			while(degreeList[top] == nullptr) top--;
+			ordering.push_back(degreeList[top]);
+			degreeList[top] = degreeList[top]->next;
+			flip = true;
+		}
+	}
+}
+
+void Graph::BreadthFirstSearchOrder() {
+	std::vector<bool> found(size);
+
+	std::queue<Vertex*> q;
+	q.push(&vertices[0]);
+
+	while(!q.empty()) {
+		Vertex* v = q.front();
+		q.pop();
+
+		Edge* curr = edges[v->id];
+		while(curr != nullptr) {
+			if(!found[curr->dest]) q.push(&vertices[curr->dest]);
+		}
+	}
+}
+
+void Graph::ColorGraph() {
 	for(Vertex* v : ordering) {
 		v->color = Color(v);
 		if(v->color > maxColor) {
 			maxColor = v->color;
-			std::cout << "New color used: " << maxColor << std::endl;
 		}
 	}
-
-	return maxColor;
 }
 
 int Graph::Color(Vertex* v) {
@@ -247,6 +383,13 @@ void Graph::Print(std::string filename) {
 			curr = curr->next;
 		}
 	}
+
+	/*for(auto& v : vertices) {
+		for(auto b : v.edges) {
+			file << b;
+		}
+		file << std::endl;
+	}*/
 
 	file.close();
 }
