@@ -32,11 +32,8 @@ void Graph::Clear() {
 }
 
 void Graph::AddEdge(const int vertex1, const int vertex2) {
-	//constant
 	Edge* e = new Edge(vertex2, edges[vertex1]);
-	//constant
 	edges[vertex1] = e;
-	//constant
 	vertices[vertex1].degree++;
 	vertices[vertex1].edges[vertex2] = true;
 }
@@ -51,29 +48,20 @@ Graph::Edge* Graph::GetEdge(const int vertex1, const int vertex2) {
 	return nullptr;
 }
 
-bool Graph::HasEdge(const int vertex) {
-	return false;
-}
-
 void Graph::CreateCompleteGraph() {
-	//n
-	for(int x = 0; x < size; x++) {
-		//n
-		for(int y = 0; y < size; y++) {
-			//constant
-			if(x == y) continue;
-			//constant
-			AddEdge(x, y);
+	for(int x = 0; x < size; x++) { //n
+		for(int y = 0; y < size; y++) { //n
+			if(x == y) continue; //constant
+			AddEdge(x, y); //constant
 		}
 	}
 }
 
 void Graph::CreateCycle() {
-	//n - 1
-	for(int x = 0; x < size - 1; x++) {
-		//constant
-		AddEdge(x, x + 1);
-		AddEdge(x + 1, x);
+
+	for(int x = 0; x < size - 1; x++) { //n - 1
+		AddEdge(x, x + 1); //constant
+		AddEdge(x + 1, x); //constant
 	}
 	//1
 	AddEdge(size - 1, 0);
@@ -127,7 +115,7 @@ void Graph::CreateSkewedDistribution(const int E) {
 	for(int x = 0; x < E; x++) {
 		v1 = (int)(size * (1 - sqrt(RandomNumberGenerator::getRandomNumber(0, 1))));
 		v2 = (int)(size * (1 - sqrt(RandomNumberGenerator::getRandomNumber(0, 1))));
-		
+
 		attempts++;
 
 		if(v1 == v2 || vertices[v1].edges[v2]) {
@@ -310,19 +298,34 @@ void Graph::OutsideInOrder() {
 }
 
 void Graph::BreadthFirstSearchOrder() {
+	std::vector<Vertex*> unadded;
 	std::vector<bool> found(size);
-
 	std::queue<Vertex*> q;
-	q.push(&vertices[0]);
 
-	while(!q.empty()) {
+	for(Vertex& v : vertices) {
+		unadded.emplace_back(&v);
+	}
+
+	while(unadded.size()) {
+		if(q.empty()) {
+			Vertex* max = *std::max_element(unadded.begin(), unadded.end(), [](Vertex* v1, Vertex* v2) {return v1->degree < v2->degree; });
+			q.push(max);
+		}
+
 		Vertex* v = q.front();
+		unadded.erase(std::remove(unadded.begin(), unadded.end(), v), unadded.end());
+		ordering.push_back(v);
 		q.pop();
+
 
 		Edge* curr = edges[v->id];
 		while(curr != nullptr) {
 			if(!found[curr->dest]) q.push(&vertices[curr->dest]);
+			found[curr->dest] = true;
+			curr = curr->next;
 		}
+
+		found[v->id] = true;
 	}
 }
 
@@ -383,13 +386,6 @@ void Graph::Print(std::string filename) {
 			curr = curr->next;
 		}
 	}
-
-	/*for(auto& v : vertices) {
-		for(auto b : v.edges) {
-			file << b;
-		}
-		file << std::endl;
-	}*/
 
 	file.close();
 }

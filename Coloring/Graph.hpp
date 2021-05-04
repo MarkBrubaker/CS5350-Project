@@ -42,7 +42,6 @@ public:
 	void Clear();
 	void AddEdge(const int vertex1, const int vertex2);
 	Graph::Edge* GetEdge(const int vertex1, const int vertex2);
-	bool HasEdge(const int vertex);
 
 	//Create differnt graphs and distrobutions
 	void CreateCompleteGraph();
