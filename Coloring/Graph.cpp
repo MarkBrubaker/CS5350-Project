@@ -58,19 +58,15 @@ void Graph::CreateCompleteGraph() {
 }
 
 void Graph::CreateCycle() {
-
-	for(int x = 0; x < size - 1; x++) { //n - 1
-		AddEdge(x, x + 1); //constant
-		AddEdge(x + 1, x); //constant
+	for(int x = 0; x < size - 1; x++) {
+		AddEdge(x, x + 1);
+		AddEdge(x + 1, x);
 	}
-	//1
 	AddEdge(size - 1, 0);
 	AddEdge(0, size - 1);
 }
 
 void Graph::CreateEvenDistribution(const int E) {
-	int v1 = 0;
-	int v2 = 0;
 	int maxEdges = size * (size - 1) / 2;
 	int attempts = 0;
 
@@ -82,12 +78,13 @@ void Graph::CreateEvenDistribution(const int E) {
 	//std::cout << "The final graph will have " << (double)E / maxEdges * 100 << "% of the edges of a complete graph" << std::endl;
 
 	for(int x = 0; x < E; x++) {
-		v1 = (int)RandomNumberGenerator::getRandomNumber(0, size);
-		v2 = (int)RandomNumberGenerator::getRandomNumber(0, size);
+		int v1 = (int)Random::getRandomNumber(0, size);
+		int v2 = (int)Random::getRandomNumber(0, size);
+
 		attempts++;
 
+		//Edge already exists and a new one need to be chosen
 		if(v1 == v2 || vertices[v1].edges[v2]) {
-			//Edge already exist and a new one need to be chosen
 			x--;
 			continue;
 		}
@@ -100,8 +97,6 @@ void Graph::CreateEvenDistribution(const int E) {
 }
 
 void Graph::CreateSkewedDistribution(const int E) {
-	int v1 = 0;
-	int v2 = 0;
 	int maxEdges = size * (size - 1) / 2;
 	int attempts = 0;
 
@@ -113,13 +108,13 @@ void Graph::CreateSkewedDistribution(const int E) {
 	//std::cout << "The final graph will have " << (double)E / maxEdges * 100 << "% of the edges of a complete graph" << std::endl;
 
 	for(int x = 0; x < E; x++) {
-		v1 = (int)(size * (1 - sqrt(RandomNumberGenerator::getRandomNumber(0, 1))));
-		v2 = (int)(size * (1 - sqrt(RandomNumberGenerator::getRandomNumber(0, 1))));
+		int v1 = (int)(size * (1 - sqrt(Random::getRandomNumber(0, 1))));
+		int v2 = (int)(size * (1 - sqrt(Random::getRandomNumber(0, 1))));
 
 		attempts++;
 
+		//Edge already exist and a new one need to be chosen
 		if(v1 == v2 || vertices[v1].edges[v2]) {
-			//Edge already exist and a new one need to be chosen
 			x--;
 			continue;
 		}
@@ -132,8 +127,6 @@ void Graph::CreateSkewedDistribution(const int E) {
 }
 
 void Graph::CreateModifiedNormalDistribution(const int E) {
-	int v1 = 0;
-	int v2 = 0;
 	int maxEdges = size * (size - 1) / 2;
 	int attempts = 0;
 
@@ -145,13 +138,13 @@ void Graph::CreateModifiedNormalDistribution(const int E) {
 	//std::cout << "The final graph will have " << (double)E / maxEdges * 100 << "% of the edges of a complete graph" << std::endl;
 
 	for(int x = 0; x < E; x++) {
-		v1 = (int)RandomNumberGenerator::getNormalNumber(size);
-		v2 = (int)RandomNumberGenerator::getRandomNumber(0, size);
+		int v1 = (int)Random::getNormalNumber(size);
+		int v2 = (int)Random::getRandomNumber(0, size);
+
 		attempts++;
 
-		bool inRange = (v1 < 0 || v1 >= size || v2 < 0 || v2 >= size);
-		if(inRange || v1 == v2 || vertices[v1].edges[v2]) {
-			//Edge already exist and a new one need to be chosen
+		//Edge already exist and a new one need to be chosen
+		if(v1 == v2 || vertices[v1].edges[v2]) {
 			x--;
 			continue;
 		}
@@ -173,7 +166,7 @@ void Graph::RandomOrder() {
 	}
 
 	//guaranteed linear by the standard library
-	std::shuffle(ordering.begin(), ordering.end(), RandomNumberGenerator::m_rng);
+	std::shuffle(ordering.begin(), ordering.end(), Random::m_rng);
 }
 
 void Graph::SmallestLastVertexOrder() {
@@ -267,8 +260,73 @@ void Graph::SmallestOriginalDegreeOrder() {
 }
 
 void Graph::LargestLastVertexOrder() {
-	SmallestLastVertexOrder();
-	std::reverse(ordering.begin(), ordering.end());
+	std::vector<Vertex*> degreeList(size);
+	std::vector<int> modifiedDegree(size);
+	std::vector<bool> removed(size);
+
+	int index = 0;
+	for(Vertex& v : vertices) {
+		if(degreeList[v.degree] != nullptr) {
+			degreeList[v.degree]->prev = &v;
+			v.next = degreeList[v.degree];
+		}
+		degreeList[v.degree] = &v;
+		modifiedDegree[index] = v.degree;
+		index++;
+	}
+
+	for(unsigned int x = 0; x < degreeList.size(); x++) {
+		if(degreeList[x] == nullptr) continue;
+
+		Vertex* v1 = degreeList[x];
+
+		//remove node from list
+		ordering.emplace_back(v1);
+		degreeList[x] = v1->next;
+		if(v1->next != nullptr) v1->next->prev = nullptr;
+		v1->next = nullptr;
+		removed[v1->id] = true;
+		//modifiedDegree[v1->id] = -1;
+
+
+		//decrease degree of neighbors and move them down
+		Edge* curr = edges[v1->id];
+		while(curr != nullptr) {
+			int v2 = curr->dest;
+
+			//If the vertex has already been removed then skip it
+			if(removed[v2] == true) {
+				curr = curr->next;
+				continue;
+			}
+
+			//Remove the vertex from the linked ilist it is in
+			if(vertices[v2].next != nullptr) vertices[v2].next->prev = vertices[v2].prev;
+			if(vertices[v2].prev != nullptr) {
+				vertices[v2].prev->next = vertices[v2].next;
+			} else {
+				degreeList[modifiedDegree[v2]] = vertices[v2].next;
+			}
+
+			//Reduce the degree of the vertex
+			modifiedDegree[v2]--;
+
+			//Put the vertex at the head of the correct linked list
+			vertices[v2].prev = nullptr;
+			vertices[v2].next = degreeList[modifiedDegree[v2]];
+			if(degreeList[modifiedDegree[v2]] != nullptr) degreeList[modifiedDegree[v2]]->prev = &vertices[v2];
+			degreeList[modifiedDegree[v2]] = &vertices[v2];
+
+			curr = curr->next;
+		}
+
+		//decrease degree to look for by 1
+		if(x == 0) {
+			x--;
+			continue;
+		}
+		x -= 2;
+	}
 }
 
 void Graph::OutsideInOrder() {

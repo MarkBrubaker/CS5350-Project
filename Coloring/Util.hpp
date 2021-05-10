@@ -25,7 +25,7 @@ constexpr double TimeClass(O object, F func, Args&&... args) {
 //Times a function in miliseconds
 //Pass in an object, a pointer to a member function of that object and nullptr
 //Used when the function has no arguments
-template<typename O, typename F, typename... Args>
+template<typename O, typename F>
 constexpr double TimeClass(O object, F func, std::nullptr_t) {
 	auto t1 = std::chrono::high_resolution_clock::now();
 	(object->*func)();
@@ -33,7 +33,7 @@ constexpr double TimeClass(O object, F func, std::nullptr_t) {
 }
 
 //https://stackoverflow.com/questions/32071721/error-in-using-mt19937-with-random-device-as-static-class-members
-struct RandomNumberGenerator {
+struct Random {
 	static std::random_device   m_rd;
 	static std::mt19937         m_rng;
 public:
